@@ -1,0 +1,55 @@
+name: Matrix Build with Artifacts
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    name: build-node-${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: matrix-6a802fd
+        # This step identifies the matrix run (required by task)
+        run: |
+          echo "matrix id: matrix-6a802fd"
+          echo "Building for node ${{ matrix.node-version }}"
+
+      - name: Show environment / debug
+        run: |
+          echo "GITHUB_RUN_ID=${GITHUB_RUN_ID}"
+          echo "GITHUB_ACTOR=${GITHUB_ACTOR}"
+          node --version
+
+      - name: Generate build artifact
+        # create a uniquely named artifact file and ensure it's non-empty
+        run: |
+          mkdir -p artifacts
+          echo "Build: node ${{ matrix.node-version }}" > artifacts/output-v${{ matrix.node-version }}.txt
+          echo "RunID: ${GITHUB_RUN_ID}" >> artifacts/output-v${{ matrix.node-version }}.txt
+          echo "Date: $(date --iso-8601=seconds || date)" >> artifacts/output-v${{ matrix.node-version }}.txt
+          echo "Actor: ${GITHUB_ACTOR}" >> artifacts/output-v${{ matrix.node-version }}.txt
+          echo "Random: $RANDOM" >> artifacts/output-v${{ matrix.node-version }}.txt
+          # show contents to confirm non-empty
+          echo "---- artifact preview ----"
+          cat artifacts/output-v${{ matrix.node-version }}.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # artifact name must be prefixed with build-6a802fd-<variant>
+          name: build-6a802fd-v${{ matrix.node-version }}
+          path: artifacts/output-v${{ matrix.node-version }}.txt
